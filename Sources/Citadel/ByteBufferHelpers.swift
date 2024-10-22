@@ -26,8 +26,8 @@ extension ByteBuffer {
             writeInteger(uidgid.groupId)
         }
         
-        if let permissions = attributes.permissions {
-            writeInteger(permissions)
+        if let mode = attributes.mode {
+			writeInteger(mode.rawValue)
         }
         
         if let accessModificationTime = attributes.accessModificationTime {
@@ -72,11 +72,11 @@ extension ByteBuffer {
         }
         
         if flags.contains(.permissions) {
-            guard let permissions = readInteger(as: UInt32.self) else {
+            guard let mode = readInteger(as: UInt32.self) else {
                 return nil
             }
             
-            attributes.permissions = permissions
+			attributes.mode = SFTPFileMode(rawValue: mode)
         }
         
         if flags.contains(.acmodtime) {
