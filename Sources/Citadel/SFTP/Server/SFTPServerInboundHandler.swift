@@ -39,7 +39,7 @@ final class SFTPServerInboundHandler: ChannelInboundHandler {
             NIOAny(SFTPMessage.version(
                 .init(
                     version: .v3,
-                    extensionData: []
+					extensionData: command.extensionData
                 )
             )),
             promise: nil

@@ -26,8 +26,26 @@ struct SFTPMessageParser: ByteToMessageDecoder {
             guard let version = payload.readInteger(as: UInt32.self) else {
                 throw SFTPError.invalidPayload(type: type)
             }
+			
+			var extensionData = [(String, String)]()
+			
+			while payload.readableBytes > 0 {
+				guard
+					let key = payload.readSSHString(),
+					let value = payload.readSSHString()
+				else {
+					throw SFTPError.invalidPayload(type: type)
+				}
+				
+				extensionData.append((key, value))
+			}
             
-            message = .initialize(.init(version: .init(version)))
+            message = .initialize(
+				.init(
+					version: .init(version),
+					extensionData: extensionData
+				)
+			)
         case .version:
             guard let version = payload.readInteger(as: UInt32.self) else {
                 throw SFTPError.invalidPayload(type: type)

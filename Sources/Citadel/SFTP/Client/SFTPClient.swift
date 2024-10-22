@@ -305,7 +305,8 @@ extension SSHClient {
     ///   as incoming data read from a file). Care is taken to ensure sensitive information is not included in
     ///   packet traces.
     public func openSFTP(
-        logger: Logger = .init(label: "nl.orlandos.citadel.sftp")
+        logger: Logger = .init(label: "nl.orlandos.citadel.sftp"),
+		extensionData:[(String, String)] = []
     ) async throws -> SFTPClient {
         try await eventLoop.flatSubmit {
             let createChannel = self.eventLoop.makePromise(of: Channel.self)
@@ -348,7 +349,7 @@ extension SSHClient {
             }.flatMap { (client: SFTPClient) in
                 timeoutCheck.succeed(())
                 
-                let initializeMessage = SFTPMessage.initialize(.init(version: .v3))
+				let initializeMessage = SFTPMessage.initialize(.init(version: .v3, extensionData: extensionData))
                 
                 logger.debug("SFTP start with version \(SFTPProtocolVersion.v3)")
                 logger.trace("SFTP OUT: \(initializeMessage.debugDescription)")

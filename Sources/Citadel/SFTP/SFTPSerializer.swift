@@ -11,6 +11,11 @@ final class SFTPMessageSerializer: MessageToByteEncoder {
         case .initialize(let initialize):
             out.writeInteger(SFTPMessage.Initialize.id.rawValue)
             out.writeInteger(initialize.version.rawValue)
+			
+			for (key, value) in initialize.extensionData {
+				out.writeSSHString(key)
+				out.writeSSHString(value)
+			}
         case .version(let version):
             out.writeInteger(SFTPMessage.Version.id.rawValue)
             out.writeInteger(version.version.rawValue)
