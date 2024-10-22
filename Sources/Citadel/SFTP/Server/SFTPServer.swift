@@ -24,6 +24,9 @@ public protocol SFTPFileHandle {
 /// Represents a file listing in a directory.
 public protocol SFTPDirectoryHandle {
     func listFiles(context: SSHContext) async throws -> [SFTPFileListing]
+	
+	/// Closes the directory. This is equivalent to the `closedir()` system call.
+	func close() async throws -> SFTPStatusCode
 }
 
 /// The context for the current SSH connection. This is passed to the delegate for each operation.

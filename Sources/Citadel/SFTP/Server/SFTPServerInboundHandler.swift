@@ -107,22 +107,32 @@ final class SFTPServerInboundHandler: ChannelInboundHandler {
                     }
                 }
             }
-        } else if directories[id] != nil {
-            directories[id] = nil
-            directoryListing[id] = nil
-            
-            previousTask = previousTask.flatMap {
-                context.channel.writeAndFlush(
-                    SFTPMessage.status(
-                        SFTPMessage.Status(
-                            requestId: command.requestId,
-                            errorCode: .ok,
-                            message: "closed",
-                            languageTag: "EN"
-                        )
-                    )
-                )
-            }
+        } else if let directory = directories[id] {
+			previousTask = previousTask.flatMap {
+				let promise = context.eventLoop.makePromise(of: SFTPStatusCode.self)
+				promise.completeWithTask {
+					try await directory.close()
+				}
+				self.directories[id] = nil
+				self.directoryListing[id] = nil
+				
+				return promise.futureResult.flatMap { status in
+					context.channel.writeAndFlush(
+						SFTPMessage.status(
+							SFTPMessage.Status(
+								requestId: command.requestId,
+								errorCode: status,
+								message: "closed",
+								languageTag: "EN"
+							)
+						)
+					)
+				}.flatMapError { _ in
+					context.channel.triggerUserOutboundEvent(ChannelFailureEvent()).flatMap {
+						context.channel.close()
+					}
+				}
+			}
         } else {
             logger.error("unknown SFTP handle")
         }
