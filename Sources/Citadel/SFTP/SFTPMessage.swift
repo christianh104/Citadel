@@ -141,7 +141,6 @@ enum SFTPResponse {
     case handle(SFTPMessage.Handle)
     case status(SFTPMessage.Status)
     case data(SFTPMessage.FileData)
-    case mkdir(SFTPMessage.MkDir)
     case name(SFTPMessage.Name)
     case attributes(SFTPMessage.Attributes)
     
@@ -153,8 +152,6 @@ enum SFTPResponse {
             case .status(let message):
                 return message.requestId
             case .data(let message):
-                return message.requestId
-            case .mkdir(let message):
                 return message.requestId
             case .name(let message):
                 return message.requestId
@@ -172,8 +169,6 @@ enum SFTPResponse {
             return .status(message)
         case .data(let message):
             return .data(message)
-        case .mkdir(let message):
-            return .mkdir(message)
         case .name(let message):
             return .name(message)
         case .attributes(let message):
@@ -189,13 +184,11 @@ enum SFTPResponse {
             self = .status(message)
         case .data(let message):
             self = .data(message)
-        case .mkdir(let message):
-            self = .mkdir(message)
         case .name(let message):
             self = .name(message)
         case .attributes(let message):
             self = .attributes(message)
-        case .realpath, .openFile, .fstat, .closeFile, .read, .write, .initialize, .version, .stat, .lstat, .rmdir, .opendir, .readdir, .remove, .fsetstat, .setstat, .symlink, .readlink, .rename:
+		case .realpath, .openFile, .fstat, .closeFile, .read, .write, .mkdir, .initialize, .version, .stat, .lstat, .rmdir, .opendir, .readdir, .remove, .fsetstat, .setstat, .symlink, .readlink, .rename:
             return nil
         }
     }
@@ -205,7 +198,6 @@ enum SFTPResponse {
         case .handle(let message): return message.debugDescription
         case .status(let message): return message.debugDescription
         case .data(let message): return message.debugDescription
-        case .mkdir(let message): return message.debugDescription
         case .name(let message): return message.debugDescription
         case .attributes(let message): return message.debugDescription
         }
@@ -553,11 +545,7 @@ public enum SFTPMessage {
     /// Data read from file.
     case data(FileData)
     
-    /// Server.
-    ///
-    /// No response, directory gets created or an error is thrown.
     case mkdir(MkDir)
-    
     case rmdir(RmDir)
     case opendir(OpenDir)
     case stat(Stat)
