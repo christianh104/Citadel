@@ -14,10 +14,10 @@ public protocol SFTPFileHandle {
     /// Closes the file. This is equivalent to the `close()` system call.
     func close() async throws -> SFTPStatusCode
 
-    /// Reads the attributes of the file. This is equivalent to the `stat()` system call.
+    /// Reads the attributes of the file. This is equivalent to the `fstat()` system call.
     func readFileAttributes() async throws -> SFTPFileAttributes
 
-    /// Sets the attributes of the file. This is equivalent to the `fsetstat()` system call.
+    /// Sets the attributes of the file. This is equivalent to the `fchmod()` system call.
     func setFileAttributes(to attributes: SFTPFileAttributes) async throws
 }
 

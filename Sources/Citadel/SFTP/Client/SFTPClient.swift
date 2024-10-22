@@ -117,8 +117,8 @@ public final class SFTPClient: Sendable {
             path = realpath.path
         } while path != oldPath
         
-        guard case .handle(let handle) = try await sendRequest(.opendir(.init(requestId: self.allocateRequestId(), handle: path))) else {
-            self.logger.warning("SFTP server returned bad response to open file request, this is a protocol error")
+        guard case .handle(let handle) = try await sendRequest(.opendir(.init(requestId: self.allocateRequestId(), filePath: path))) else {
+            self.logger.warning("SFTP server returned bad response to open directory request, this is a protocol error")
             throw SFTPError.invalidResponse
         }
         
@@ -159,7 +159,7 @@ public final class SFTPClient: Sendable {
         )))
         
         guard case .attributes(let attributes) = response else {
-            self.logger.warning("SFTP server returned bad response to open file request, this is a protocol error")
+            self.logger.warning("SFTP server returned bad response to file attributes request, this is a protocol error")
             throw SFTPError.invalidResponse
         }
         

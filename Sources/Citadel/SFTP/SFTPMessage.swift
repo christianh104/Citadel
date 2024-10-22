@@ -420,9 +420,9 @@ public enum SFTPMessage {
         
         public let requestId: UInt32
         
-        public let handle: String
+        public let filePath: String
         
-        public var debugDescription: String { "{\(self.requestId)}('\(self.handle)')" }
+        public var debugDescription: String { "{\(self.requestId)}('\(self.filePath)')" }
         
         fileprivate var debugVariantWithoutLargeData: Self { self }
     }

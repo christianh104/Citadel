@@ -96,7 +96,7 @@ final class SFTPServerInboundHandler: ChannelInboundHandler {
                             SFTPMessage.Status(
                                 requestId: command.requestId,
                                 errorCode: status,
-                                message: "uploaded",
+                                message: "closed",
                                 languageTag: "EN"
                             )
                         )
@@ -307,7 +307,7 @@ final class SFTPServerInboundHandler: ChannelInboundHandler {
     func openDir(command: SFTPMessage.OpenDir, context: ChannelHandlerContext) {
         let promise = context.eventLoop.makePromise(of: (SFTPDirectoryHandle, SFTPDirectoryHandleIterator).self)
         promise.completeWithTask {
-            let handle = try await self.delegate.openDirectory(atPath: command.handle, context: self.makeContext())
+            let handle = try await self.delegate.openDirectory(atPath: command.filePath, context: self.makeContext())
             let files = try await handle.listFiles(context: self.makeContext())
             let iterator = SFTPDirectoryHandleIterator(listing: files)
             return (handle, iterator)

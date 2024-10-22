@@ -53,7 +53,7 @@ public final class SFTPFile {
             requestId: self.client.allocateRequestId(),
             path: path
         ))) else {
-            self.logger.warning("SFTP server returned bad response to read file request, this is a protocol error")
+            self.logger.warning("SFTP server returned bad response to file attributes request, this is a protocol error")
             throw SFTPError.invalidResponse
         }
                                                                                          
