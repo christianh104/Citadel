@@ -73,7 +73,7 @@ struct SFTPMessageParser: ByteToMessageDecoder {
         case .closeFile:
             guard
                 let requestId = payload.readInteger(as: UInt32.self),
-                let handle = payload.readSSHBuffer()
+                let handle = payload.readSSHHandle()
             else {
                 throw SFTPError.invalidPayload(type: type)
             }
@@ -87,7 +87,7 @@ struct SFTPMessageParser: ByteToMessageDecoder {
         case .read:
             guard
                 let requestId = payload.readInteger(as: UInt32.self),
-                let handle = payload.readSSHBuffer(),
+                let handle = payload.readSSHHandle(),
                 let offset = payload.readInteger(as: UInt64.self),
                 let length = payload.readInteger(as: UInt32.self)
             else {
@@ -105,7 +105,7 @@ struct SFTPMessageParser: ByteToMessageDecoder {
         case .write:
             guard
                 let requestId = payload.readInteger(as: UInt32.self),
-                let handle = payload.readSSHBuffer(),
+                let handle = payload.readSSHHandle(),
                 let offset = payload.readInteger(as: UInt64.self),
                 let data = payload.readSSHBuffer()
             else {
@@ -141,7 +141,7 @@ struct SFTPMessageParser: ByteToMessageDecoder {
         case .handle:
             guard
                 let requestId = payload.readInteger(as: UInt32.self),
-                let handle = payload.readSSHBuffer()
+                let handle = payload.readSSHHandle()
             else {
                 throw SFTPError.invalidPayload(type: type)
             }
@@ -255,7 +255,7 @@ struct SFTPMessageParser: ByteToMessageDecoder {
         case .readdir:
             guard
                 let requestId = payload.readInteger(as: UInt32.self),
-                let handle = payload.readSSHBuffer()
+                let handle = payload.readSSHHandle()
             else {
                 throw SFTPError.invalidPayload(type: type)
             }
@@ -317,7 +317,7 @@ struct SFTPMessageParser: ByteToMessageDecoder {
         case .fstat:
             guard
                 let requestId = payload.readInteger(as: UInt32.self),
-                let handle = payload.readSSHBuffer()
+                let handle = payload.readSSHHandle()
             else {
                 throw SFTPError.invalidPayload(type: type)
             }
@@ -361,7 +361,7 @@ struct SFTPMessageParser: ByteToMessageDecoder {
         case .fsetstat:
             guard
                 let requestId = payload.readInteger(as: UInt32.self),
-                let handle = payload.readSSHBuffer(),
+                let handle = payload.readSSHHandle(),
                 let attributes = payload.readSFTPFileAttributes()
             else {
                 throw SFTPError.invalidPayload(type: type)

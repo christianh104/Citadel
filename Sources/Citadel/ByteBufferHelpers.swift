@@ -148,4 +148,17 @@ extension ByteBuffer {
         moveReaderIndex(forwardBy: 4 + Int(length))
         return slice
     }
+    
+    mutating func readSSHHandle() -> ByteBuffer? {
+        guard
+            let length = getInteger(at: self.readerIndex, as: UInt32.self),
+            length <= 256,
+            let slice = getSlice(at: self.readerIndex + 4, length: Int(length))
+        else {
+            return nil
+        }
+        
+        moveReaderIndex(forwardBy: 4 + Int(length))
+        return slice
+    }
 }
