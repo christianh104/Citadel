@@ -167,7 +167,7 @@ struct SFTPMessageParser: ByteToMessageDecoder {
             message = .handle(
                 .init(
                     requestId: requestId,
-                    handle: handle.slice()
+                    handle: handle
                 )
             )
         case .data:
@@ -181,7 +181,7 @@ struct SFTPMessageParser: ByteToMessageDecoder {
             message = .data(
                 .init(
                     requestId: requestId,
-                    data: data.slice()
+                    data: data
                 )
             )
         case .stat:
@@ -343,7 +343,7 @@ struct SFTPMessageParser: ByteToMessageDecoder {
             message = .fstat(
                 .init(
                     requestId: requestId,
-                    handle: handle.slice()
+                    handle: handle
                 )
             )
         case .remove:
