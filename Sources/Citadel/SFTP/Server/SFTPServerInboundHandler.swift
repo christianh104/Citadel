@@ -69,7 +69,7 @@ final class SFTPServerInboundHandler: ChannelInboundHandler {
             return SFTPMessage.handle(
                 SFTPMessage.Handle(
                     requestId: command.requestId,
-                    handle: ByteBuffer(integer: handle, endianness: .big)
+					handle: SFTPFile.SFTPFileHandle(integer: handle, endianness: .big)
                 )
             )
         }.flatMap { handle in
@@ -312,7 +312,7 @@ final class SFTPServerInboundHandler: ChannelInboundHandler {
             return SFTPMessage.handle(
                 SFTPMessage.Handle(
                     requestId: command.requestId,
-                    handle: ByteBuffer(integer: handle, endianness: .big)
+                    handle: SFTPFile.SFTPFileHandle(integer: handle, endianness: .big)
                 )
             )
         }.flatMap { handle in
@@ -587,7 +587,7 @@ final class SFTPServerInboundHandler: ChannelInboundHandler {
         }
     }
     
-    func withFileHandle<T>(_ handle: ByteBuffer, context: ChannelHandlerContext, perform: @Sendable @escaping (SFTPFileHandle) async throws -> T) -> EventLoopFuture<T> {
+    func withFileHandle<T>(_ handle: SFTPFile.SFTPFileHandle, context: ChannelHandlerContext, perform: @Sendable @escaping (SFTPFileHandle) async throws -> T) -> EventLoopFuture<T> {
         guard
             let id: UInt32 = handle.getInteger(at: 0),
             let file = files[id]

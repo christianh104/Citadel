@@ -149,7 +149,7 @@ extension ByteBuffer {
         return slice
     }
     
-    mutating func readSSHHandle() -> ByteBuffer? {
+	mutating func readSSHHandle() -> SFTPFile.SFTPFileHandle? {
         guard
             let length = getInteger(at: self.readerIndex, as: UInt32.self),
             length <= 256,

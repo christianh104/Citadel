@@ -253,7 +253,7 @@ public enum SFTPMessage {
         public static let id = SFTPMessageType.closeFile
         
         public var requestId: UInt32
-        public var handle: ByteBuffer
+		public var handle: SFTPFile.SFTPFileHandle
         
         public var debugDescription: String { "{\(self.requestId)}(\(self.handle.sftpHandleDebugDescription))" }
         fileprivate var debugVariantWithoutLargeData: Self { self }
@@ -263,7 +263,7 @@ public enum SFTPMessage {
         public static let id = SFTPMessageType.read
         
         public var requestId: UInt32
-        public var handle: ByteBuffer
+		public var handle: SFTPFile.SFTPFileHandle
         public var offset: UInt64
         public var length: UInt32
         
@@ -275,7 +275,7 @@ public enum SFTPMessage {
         public static let id = SFTPMessageType.write
         
         public var requestId: UInt32
-        public var handle: ByteBuffer
+		public var handle: SFTPFile.SFTPFileHandle
         public var offset: UInt64
         public var data: ByteBuffer
         
@@ -300,7 +300,7 @@ public enum SFTPMessage {
         public static let id = SFTPMessageType.handle
         
         public let requestId: UInt32
-        public var handle: ByteBuffer
+		public var handle: SFTPFile.SFTPFileHandle
         
         public var debugDescription: String { "{\(self.requestId)}(\(self.handle.sftpHandleDebugDescription))" }
         fileprivate var debugVariantWithoutLargeData: Self { self }
@@ -310,7 +310,7 @@ public enum SFTPMessage {
         public static let id = SFTPMessageType.fstat
         
         public let requestId: UInt32
-        public var handle: ByteBuffer
+		public var handle: SFTPFile.SFTPFileHandle
         
         public var debugDescription: String { "{\(self.requestId)}(\(self.handle.sftpHandleDebugDescription))" }
         fileprivate var debugVariantWithoutLargeData: Self { self }
@@ -330,7 +330,7 @@ public enum SFTPMessage {
         public static let id = SFTPMessageType.fsetstat
         
         public let requestId: UInt32
-        public var handle: ByteBuffer
+		public var handle: SFTPFile.SFTPFileHandle
         public var attributes: SFTPFileAttributes
         
         public var debugDescription: String { "{\(self.requestId)}(\(self.handle),\(self.attributes)" }
@@ -491,7 +491,7 @@ public enum SFTPMessage {
         public static let id = SFTPMessageType.readdir
         
         public let requestId: UInt32
-        public internal(set) var handle: ByteBuffer
+		public internal(set) var handle: SFTPFile.SFTPFileHandle
         
         public var debugDescription: String { "{\(self.requestId)}('\(self.handle)'" }
         
