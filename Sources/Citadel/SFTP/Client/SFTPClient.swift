@@ -277,8 +277,7 @@ public final class SFTPClient: Sendable {
         let _ = try await sendRequest(.rename(.init(
             requestId: allocateRequestId(),
             oldPath: oldPath,
-            newPath: newPath,
-            flags: flags
+            newPath: newPath
         )))
 
         self.logger.debug("SFTP renamed file at \(oldPath) to \(newPath)")

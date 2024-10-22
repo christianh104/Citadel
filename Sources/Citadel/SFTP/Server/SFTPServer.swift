@@ -85,7 +85,7 @@ public protocol SFTPDelegate {
     func readSymlink(atPath path: String, context: SSHContext) async throws -> [SFTPPathComponent]
 
     /// Renames a file
-    func rename(oldPath: String, newPath: String, flags: UInt32, context: SSHContext) async throws -> SFTPStatusCode
+    func rename(oldPath: String, newPath: String, context: SSHContext) async throws -> SFTPStatusCode
 }
 
 enum SFTPServerSubsystem {

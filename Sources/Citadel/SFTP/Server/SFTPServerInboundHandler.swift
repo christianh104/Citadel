@@ -491,7 +491,6 @@ final class SFTPServerInboundHandler: ChannelInboundHandler {
             try await self.delegate.rename(
                 oldPath: command.oldPath,
                 newPath: command.newPath,
-                flags: command.flags,
                 context: self.makeContext()
             )
         }

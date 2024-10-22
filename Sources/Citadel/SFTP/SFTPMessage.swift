@@ -343,9 +343,8 @@ public enum SFTPMessage {
         public let requestId: UInt32
         public var oldPath: String
         public var newPath: String
-        public var flags: UInt32
 
-        public var debugDescription: String { "{\(self.requestId)}(\(self.oldPath),\(self.newPath),\(self.flags))" }
+        public var debugDescription: String { "{\(self.requestId)}(\(self.oldPath),\(self.newPath))" }
         fileprivate var debugVariantWithoutLargeData: Self { self }
     }
 
