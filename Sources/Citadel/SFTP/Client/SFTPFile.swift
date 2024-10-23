@@ -28,7 +28,7 @@ public final class SFTPFile {
     /// Wrap a file handle received from an SFTP server in an `SFTPFile`. The object should be treated as
     /// having taken ownership of the handle; nothing else should continue to use the handle.
     ///
-    /// Do not create instances of `SFTPFile` yourself; use `SFTPClient.openFile()`.
+    /// Do not create instances of `SFTPFile` yourself; use `SFTPClient.openFile()` or `SFTPClient.withFile()`.
     internal init(client: SFTPClient, path: String, handle: SFTPFileHandle) {
         self.isActive = true
         self.handle = handle
@@ -45,13 +45,13 @@ public final class SFTPFile {
         }
     }
     
-    /// Read the attributes of the file. This is equivalent to the `stat()` system call.
+    /// Read the attributes of the file. This is equivalent to the `fstat()` system call.
     public func readAttributes() async throws -> SFTPFileAttributes {
         guard self.isActive else { throw SFTPError.fileHandleInvalid }
         
-        guard case .attributes(let attributes) = try await self.client.sendRequest(.stat(.init(
+        guard case .attributes(let attributes) = try await self.client.sendRequest(.fstat(.init(
             requestId: self.client.allocateRequestId(),
-            path: path
+            handle: handle
         ))) else {
             self.logger.warning("SFTP server returned bad response to file attributes request, this is a protocol error")
             throw SFTPError.invalidResponse
