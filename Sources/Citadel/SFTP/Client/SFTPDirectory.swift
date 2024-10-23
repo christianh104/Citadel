@@ -57,21 +57,7 @@ public final class SFTPDirectory: AsyncSequence {
 	public func read() async throws -> [SFTPPathComponent]? {
 		guard self.isActive else { throw SFTPError.fileHandleInvalid }
 		
-		let response = try await self.client.sendRequest(.readdir(.init(
-			requestId: self.client.allocateRequestId(),
-			handle: self.handle
-		)))
-		
-		switch response {
-		case .name(let name):
-			self.logger.debug("SFTP read \(name.count) entries from directory \(self.handle.sftpHandleDebugDescription)")
-			return name.components
-		case .status(let status) where status.errorCode == .eof:
-			return nil
-		default:
-			self.logger.warning("SFTP server returned bad response to read directory request, this is a protocol error")
-			throw SFTPError.invalidResponse
-		}
+        return try await self.client._readDirectory(handle: self.handle)
 	}
 	
 	/// Read all entries in the directory.

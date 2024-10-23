@@ -199,6 +199,27 @@ public final class SFTPClient: Sendable {
 		self.logger.debug("SFTP closed file \(handle.sftpHandleDebugDescription)")
 	}
     
+    /// Read a batch of entries from the directory, or nil if there are no more entries to read.
+    public func _readDirectory(
+        handle:SFTPFile.SFTPFileHandle
+    ) async throws -> [SFTPPathComponent]? {
+        let response = try await sendRequest(.readdir(.init(
+            requestId: allocateRequestId(),
+            handle: handle
+        )))
+        
+        switch response {
+        case .name(let name):
+            self.logger.debug("SFTP read \(name.count) entries from directory \(handle.sftpHandleDebugDescription)")
+            return name.components
+        case .status(let status) where status.errorCode == .eof:
+            return nil
+        default:
+            self.logger.warning("SFTP server returned bad response to read directory request, this is a protocol error")
+            throw SFTPError.invalidResponse
+        }
+    }
+    
     /// Open a file at the specified path on the SFTP server, using the given flags and attributes.  If the `.create`
     /// flag is specified, the given attributes are applied to the created file. If successful, an `SFTPFile` is
     /// returned which can be used to perform various operations on the open file. The file object must be explicitly
