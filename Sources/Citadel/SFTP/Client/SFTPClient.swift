@@ -100,53 +100,6 @@ public final class SFTPClient: Sendable {
         }.get()
     }
     
-    /// List the contents of a directory on the SFTP server.
-    public func listDirectory(
-        atPath path: String
-    ) async throws -> [SFTPMessage.Name] {
-        var path = path
-        var oldPath: String
-
-        repeat {
-            oldPath = path
-            guard case .name(let realpath) = try await sendRequest(.realpath(.init(requestId: self.allocateRequestId(), path: path))) else {
-                self.logger.warning("SFTP server returned bad response to open file request, this is a protocol error")
-                throw SFTPError.invalidResponse
-            }
-
-            path = realpath.path
-        } while path != oldPath
-        
-        guard case .handle(let handle) = try await sendRequest(.opendir(.init(requestId: self.allocateRequestId(), filePath: path))) else {
-            self.logger.warning("SFTP server returned bad response to open directory request, this is a protocol error")
-            throw SFTPError.invalidResponse
-        }
-        
-        var names = [SFTPMessage.Name]()
-        var response = try await sendRequest(
-            .readdir(
-                .init(
-                    requestId: self.allocateRequestId(),
-                    handle: handle.handle
-                )
-            )
-        )
-        
-        while case .name(let name) = response {
-            names.append(name)
-            response = try await sendRequest(
-                .readdir(
-                    .init(
-                        requestId: self.allocateRequestId(),
-                        handle: handle.handle
-                    )
-                )
-            )
-        }
-        
-        return names
-    }
-    
     /// Get the attributes of a file on the SFTP server. If the file does not exist, an error is thrown.
     public func getAttributes(
         at filePath: String
@@ -165,6 +118,86 @@ public final class SFTPClient: Sendable {
         
         return attributes.attributes
     }
+	
+	/// Open a file at the specified path on the SFTP server, using the given flags and attributes.  If the `.create`
+	/// flag is specified, the given attributes are applied to the created file. If successful, an `SFTPFile.SFTPFileHandle` is
+	/// returned which can be used to perform various operations on the open file. The file handle must be explicitly
+	/// closed by the caller; the client does not keep track of open files.
+	///
+	/// - Warning: The `attributes` parameter is currently unimplemented; any values provided are ignored.
+	///
+	/// - Important: This API is annoying to use safely. Strongly consider using
+	///   `withFile(filePath:flags:attributes:_:)` instead.
+	public func _openFile(
+		filePath: String,
+		flags: SFTPOpenFileFlags,
+		attributes: SFTPFileAttributes = .none
+	) async throws -> SFTPFile.SFTPFileHandle {
+		self.logger.info("SFTP requesting to open file at '\(filePath)' with flags \(flags)")
+		
+		let response = try await sendRequest(.openFile(.init(
+			requestId: self.allocateRequestId(),
+			filePath: filePath,
+			pFlags: flags,
+			attributes: attributes
+		)))
+		
+		guard case .handle(let handle) = response else {
+			self.logger.warning("SFTP server returned bad response to open file request, this is a protocol error")
+			throw SFTPError.invalidResponse
+		}
+		
+		self.logger.debug("SFTP opened file \(filePath), file handle \(handle.handle.sftpHandleDebugDescription)")
+		return handle.handle
+	}
+	
+	/// Open a directory at the specified path on the SFTP server. If successful, an `SFTPFile.SFTPFileHandle` is
+	/// returned which can be used to read the open directory. The file handle must be explicitly
+	/// closed by the caller; the client does not keep track of open files.
+	///
+	/// - Important: This API is annoying to use safely. Strongly consider using
+	///   `withDirectory(filePath:_:)` instead.
+	public func _openDirectory(
+		atPath path: String
+	) async throws -> SFTPFile.SFTPFileHandle {
+		self.logger.info("SFTP requesting to open directory at '\(path)')")
+		
+		let response = try await sendRequest(.opendir(.init(
+			requestId: self.allocateRequestId(),
+			filePath: path
+		)))
+		
+		guard case .handle(let handle) = response else {
+			self.logger.warning("SFTP server returned bad response to open directory request, this is a protocol error")
+			throw SFTPError.invalidResponse
+		}
+		
+		self.logger.debug("SFTP opened directory \(path), file handle \(handle.handle.sftpHandleDebugDescription)")
+		return handle.handle
+	}
+	
+	/// Close the file handle. No further operations may take place on the file handle after it is closed.
+	///
+	/// - Note: Files are automatically closed if the SFTP channel is shut down, but it is strongly recommended that
+	///  callers explicitly close the file anyway, as multiple close operations are idempotent.
+	public func _closeFileOrDirectory(
+		handle:SFTPFile.SFTPFileHandle
+	) async throws -> Void {
+		self.logger.debug("SFTP closing and invalidating file \(handle.sftpHandleDebugDescription)")
+		
+		let result = try await sendRequest(.closeFile(.init(requestId: allocateRequestId(), handle: handle)))
+		
+		guard case .status(let status) = result else {
+			self.logger.warning("SFTP server returned bad response to close request, this is a protocol error")
+			throw SFTPError.invalidResponse
+		}
+		
+		guard status.errorCode == .ok else {
+			throw SFTPError.errorStatus(status)
+		}
+		
+		self.logger.debug("SFTP closed file \(handle.sftpHandleDebugDescription)")
+	}
     
     /// Open a file at the specified path on the SFTP server, using the given flags and attributes.  If the `.create`
     /// flag is specified, the given attributes are applied to the created file. If successful, an `SFTPFile` is
@@ -180,23 +213,19 @@ public final class SFTPClient: Sendable {
         flags: SFTPOpenFileFlags,
         attributes: SFTPFileAttributes = .none
     ) async throws -> SFTPFile {
-        self.logger.info("SFTP requesting to open file at '\(filePath)' with flags \(flags)")
-        
-        let response = try await sendRequest(.openFile(.init(
-            requestId: self.allocateRequestId(),
-            filePath: filePath,
-            pFlags: flags,
-            attributes: attributes
-        )))
-
-        guard case .handle(let handle) = response else {
-            self.logger.warning("SFTP server returned bad response to open file request, this is a protocol error")
-            throw SFTPError.invalidResponse
-        }
-            
-        self.logger.debug("SFTP opened file \(filePath), file handle \(handle.handle.sftpHandleDebugDescription)")
-        return SFTPFile(client: self, path: filePath, handle: handle.handle)
+		let handle = try await _openFile(filePath: filePath, flags: flags, attributes: attributes)
+		return SFTPFile(client: self, path: filePath, handle: handle)
     }
+	
+	/// Open a directory at the specified path on the SFTP server. If successful, an `SFTPDirectory` is
+	/// returned which can be used to perform various operations on the open directory. The directory object must be iterated
+	/// entirely, or explicitly closed by the caller; the client does not keep track of open directories.
+	public func openDirectory(
+		atPath path: String
+	) async throws -> SFTPDirectory {
+		let handle = try await _openDirectory(atPath: path)
+		return SFTPDirectory(client: self, path: path, handle: handle)
+	}
     
     /// Open a file at the specified path on the SFTP server, using the given flags. If the `.create` flag is specified,
     /// the given attributes are applied to the created file. If the open succeeds, the provided closure is invoked with
@@ -221,6 +250,41 @@ public final class SFTPClient: Sendable {
             throw error
         }
     }
+	
+	/// Open a directory at the specified path on the SFTP server, using the given flags. If the open succeeds, the provided closure is invoked with
+	/// an `SFTPDirectory` object which can be used to perform operations on the directory. When the closure returns, the directory is
+	/// automatically closed. The `SFTPDirectory` object must not be persisted beyond the lifetime of the closure.
+	public func withDirectory<R>(
+		atPath path: String,
+		_ closure: @escaping @Sendable (SFTPDirectory) async throws -> R
+	) async throws -> R {
+		let directory = try await self.openDirectory(atPath: path)
+		
+		do {
+			let result = try await closure(directory)
+			try await directory.close() // should we ignore errors from this? always been a question for the close(2) syscall too
+			return result
+		} catch {
+			try await directory.close() // if this errors, should we throw it as an underlying error? or just ignore?
+			throw error
+		}
+	}
+	
+	/// Iterate the contents of a directory on the SFTP server.
+	public func iterateDirectory(
+		atPath path: String
+	) async throws -> SFTPDirectoryIterator {
+		let directory = try await self.openDirectory(atPath: path)
+		return directory.makeAsyncIterator()
+	}
+	
+	/// List the contents of a directory on the SFTP server.
+	public func listDirectory(
+		atPath path: String
+	) async throws -> [SFTPPathComponent] {
+		let directory = try await self.openDirectory(atPath: path)
+		return try await directory.readAll()
+	}
     
     /// Create a directory at the specified path on the SFTP server. If the directory already exists, an error is thrown.
     public func createDirectory(
