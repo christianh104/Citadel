@@ -38,6 +38,8 @@ enum SFTPRequest: CustomDebugStringConvertible {
     case remove(SFTPMessage.Remove)
     case rmdir(SFTPMessage.RmDir)
     case rename(SFTPMessage.Rename)
+    case symlink(SFTPMessage.Symlink)
+    case readlink(SFTPMessage.Readlink)
 
     var requestId: UInt32 {
         get {
@@ -73,6 +75,10 @@ enum SFTPRequest: CustomDebugStringConvertible {
             case .rmdir(let message):
                 return message.requestId
             case .rename(let message):
+                return message.requestId
+            case .symlink(let message):
+                return message.requestId
+            case .readlink(let message):
                 return message.requestId
             }
         }
@@ -112,6 +118,10 @@ enum SFTPRequest: CustomDebugStringConvertible {
             return .rmdir(message)
         case .rename(let message):
             return .rename(message)
+        case .symlink(let message):
+            return .symlink(message)
+        case .readlink(let message):
+            return .readlink(message)
         }
     }
     
@@ -133,6 +143,8 @@ enum SFTPRequest: CustomDebugStringConvertible {
         case .remove(let message): return message.debugDescription
         case .rmdir(let message): return message.debugDescription
         case .rename(let message): return message.debugDescription
+        case .symlink(let message): return message.debugDescription
+        case .readlink(let message): return message.debugDescription
         }
     }
 }

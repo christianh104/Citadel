@@ -100,16 +100,49 @@ public final class SFTPClient: Sendable {
         }.get()
     }
     
+    /// Gets a canonicalized absolute path.
+    public func realPath(
+        _ path: String
+    ) async throws -> String {
+        guard case .name(let realpath) = try await sendRequest(.realpath(.init(requestId: self.allocateRequestId(), path: path))) else {
+            self.logger.warning("SFTP server returned bad response to real path request, this is a protocol error")
+            throw SFTPError.invalidResponse
+        }
+        
+        return realpath.path
+    }
+    
+    /// Expands a symbolic link.
+    public func readLink(
+        _ path: String
+    ) async throws -> String {
+        guard case .name(let linkpath) = try await sendRequest(.readlink(.init(requestId: self.allocateRequestId(), path: path))) else {
+            self.logger.warning("SFTP server returned bad response to read link request, this is a protocol error")
+            throw SFTPError.invalidResponse
+        }
+        
+        return linkpath.path
+    }
+    
     /// Get the attributes of a file on the SFTP server. If the file does not exist, an error is thrown.
     public func getAttributes(
-        at filePath: String
+        at filePath: String,
+        followLink: Bool = true
     ) async throws -> SFTPFileAttributes {
         self.logger.info("SFTP requesting file attributes at '\(filePath)'")
         
-        let response = try await sendRequest(.stat(.init(
-            requestId: allocateRequestId(),
-            path: filePath
-        )))
+        let response: SFTPResponse
+        if followLink {
+            response = try await sendRequest(.stat(.init(
+                requestId: allocateRequestId(),
+                path: filePath
+            )))
+        } else {
+            response = try await sendRequest(.lstat(.init(
+                requestId: allocateRequestId(),
+                path: filePath
+            )))
+        }
         
         guard case .attributes(let attributes) = response else {
             self.logger.warning("SFTP server returned bad response to file attributes request, this is a protocol error")
